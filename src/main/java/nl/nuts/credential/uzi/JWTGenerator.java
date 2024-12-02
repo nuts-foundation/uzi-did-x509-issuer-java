@@ -23,7 +23,7 @@ public class JWTGenerator {
      * @throws CertificateException
      * @throws NoSuchAlgorithmException
      */
-    public static void generateVC(Certificate certificate, Key privateKey, String subject) throws CredentialCreationException {
+    public static String generateVC(Certificate certificate, Key privateKey, String subject) throws CredentialCreationException {
         try {
             String issuerDID = certificate.didX509();
             String kid = String.format("%s#0", issuerDID);
@@ -48,7 +48,7 @@ public class JWTGenerator {
                     .signWith(privateKey)
                     .compact();
 
-            System.out.println("Generated JWT: " + jwt);
+            return jwt;
         } catch (InvalidCertificateException e) {
             throw new CredentialCreationException(e);
         }

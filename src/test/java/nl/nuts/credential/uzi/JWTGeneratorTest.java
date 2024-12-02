@@ -21,7 +21,8 @@ public class JWTGeneratorTest {
             try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("example.com-chain.pem")) {
                 List<X509Certificate> certificates = X509CertificateParser.parse(inputStream);
                 Certificate certificate = new Certificate(certificates);
-                JWTGenerator.generateVC(certificate, privateKey, "did:web:example.com:iam:groot");
+                String jwt = JWTGenerator.generateVC(certificate, privateKey, "did:web:example.com:iam:groot");
+                System.out.println(jwt);
             }
         });
     }
