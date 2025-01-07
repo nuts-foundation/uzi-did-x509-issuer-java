@@ -137,15 +137,19 @@ public class Certificate {
 
         return Map.of("vc", Map.of(
                 "@context", "https://www.w3.org/2018/credentials/v1",
-                "type", List.of("VerifiableCredential", "UziServerCertificateCredential"),
+                "type", List.of("VerifiableCredential", "X509Credential"),
                 "credentialSubject", Map.of(
-                        "CN", attributes.get("CN"),
-                        "O", attributes.get("O"),
-//                        "OU", attributes.get("OU"),
-//                        "C", attributes.get("C"),
-                        "L", attributes.get("L"),
-//                        "ST", attributes.get("ST"),
-                        "otherName", this.otherName()
+                        "subject", Map.of(
+                            "CN", attributes.get("CN"),
+                            "O", attributes.get("O"),
+    //                        "OU", attributes.get("OU"),
+    //                        "C", attributes.get("C"),
+                            "L", attributes.get("L")
+    //                        "ST", attributes.get("ST"),
+                        ),
+                        "san", Map.of(
+                            "otherName", this.otherName()
+                        )
                 )
         ));
     }
