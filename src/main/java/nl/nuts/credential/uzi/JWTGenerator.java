@@ -1,6 +1,8 @@
 package nl.nuts.credential.uzi;
 
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.SecureDigestAlgorithm;
+import io.jsonwebtoken.security.SignatureAlgorithm;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 
@@ -9,7 +11,6 @@ import java.io.InputStreamReader;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -33,19 +34,25 @@ public class JWTGenerator {
             List<X509Certificate> x5c = new ArrayList<>(certificate.getChain());
             Collections.reverse(x5c);
 
+            String jti = String.format("%s#%s", issuerDID, UUID.randomUUID());
+
+            SecureDigestAlgorithm sigAlg = Jwts.SIG.get().forKey("PS256");
+
             // Generate the JWT
             String jwt = Jwts.builder()
                     .header()
                         .keyId(kid)
+                        .type("JWT")
                         .x509Chain(x5c)
                         .x509Sha1Thumbprint(x5t)
                         .and()
+                    .id(jti)
                     .issuer(issuerDID)
                     .subject(subject)
-                    .issuedAt(new Date())
+                    .notBefore(new Date())
                     .expiration(expiration)
                     .claims(certificate.toClaims())
-                    .signWith(privateKey)
+                    .signWith(privateKey, sigAlg)
                     .compact();
 
             return jwt;

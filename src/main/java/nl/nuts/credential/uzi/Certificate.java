@@ -73,10 +73,10 @@ public class Certificate {
                 chain.remove(chain.size() - 1);
             }
             byte[] encoded = chain.get(chain.size() - 1).getEncoded();
-            MessageDigest digestSHA512 = MessageDigest.getInstance("SHA-512");
+            MessageDigest digestSHA512 = MessageDigest.getInstance("SHA-256");
             byte[] hash = digestSHA512.digest(encoded);
             String policy = this.otherName();
-            return String.format("did:x509:0:sha512:%s::san:otherName:%s", Base64.getUrlEncoder().withoutPadding().encodeToString(hash), policy);
+            return String.format("did:x509:0:sha256:%s::san:otherName:%s", Base64.getUrlEncoder().withoutPadding().encodeToString(hash), policy);
         } catch (CertificateEncodingException e) {
             throw new InvalidCertificateException("CA is incorrect or malformed: " + e.getMessage());
         } catch (NoSuchAlgorithmException e) {
