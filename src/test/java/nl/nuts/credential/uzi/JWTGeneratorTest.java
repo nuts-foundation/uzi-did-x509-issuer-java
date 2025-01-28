@@ -15,7 +15,7 @@ public class JWTGeneratorTest {
     @Test
     public void testGenerateVC() {
 
-        Key privateKey = loadPrivateKey();
+        Key privateKey = loadPrivateKey("example.com.key");
 
         assertDoesNotThrow(() -> {
             try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("example.com-chain.pem")) {

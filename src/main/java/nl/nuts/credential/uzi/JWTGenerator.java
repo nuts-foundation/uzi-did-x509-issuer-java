@@ -61,10 +61,13 @@ public class JWTGenerator {
         }
     }
 
-    static Key loadPrivateKey() {
-        // load from class path: example.com.key
-        // it's pem encoded
-        String fileName = "example.com.key";
+    /**
+     * Load a pem-encoded private key from the class path
+     * @param fileName the file name of the private key
+     *
+     * @return the pem-encoded private key
+     */
+    static Key loadPrivateKey(String fileName) {
         try (InputStream inputStream = JWTGenerator.class.getClassLoader().getResourceAsStream(fileName)) {
             try (PemReader pemReader = new PemReader(new InputStreamReader(inputStream))) {
                 PemObject pemObject = pemReader.readPemObject();
