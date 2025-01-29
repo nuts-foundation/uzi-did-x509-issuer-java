@@ -66,11 +66,15 @@ public class JWTGenerator {
      */
     public static String generateVC(Certificate certificate, KeyStore keyStore, String password, String subject) throws CredentialCreationException {
         try {
+            char[] pass = null;
+            if (password != null) {
+                pass = password.toCharArray();
+            }
             // get first alias
             Enumeration<String> aliases = keyStore.aliases();
             String alias = aliases.nextElement();
             // Retrieve the private key from the KeyStore
-            Key privateKey = keyStore.getKey(alias, password.toCharArray());
+            Key privateKey = keyStore.getKey(alias, pass);
             return generateVCInternal(certificate, privateKey, subject);
         } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
             throw new CredentialCreationException(e);
