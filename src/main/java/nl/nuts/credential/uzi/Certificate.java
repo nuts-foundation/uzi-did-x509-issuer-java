@@ -8,6 +8,8 @@ import javax.security.auth.x500.X500Principal;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
@@ -80,12 +82,26 @@ public class Certificate {
             String withSan = String.format("did:x509:0:sha256:%s::san:otherName:%s", Base64.getUrlEncoder().withoutPadding().encodeToString(hash), policy);
             Map<String, String> subject = this.subjectValues();
             // join key/values with a colon, join pairs with a colon
-            String subjectString = subject.entrySet().stream().map(e -> e.getKey() + ":" + e.getValue()).collect(Collectors.joining(":"));
+            String subjectString = subject.entrySet().stream().map(e -> formatKeyValue(e.getKey(), e.getValue())).collect(Collectors.joining(":"));
             return withSan + "::" + "subject:" + subjectString;
+
         } catch (CertificateEncodingException e) {
             throw new InvalidCertificateException("CA is incorrect or malformed: " + e.getMessage());
         } catch (NoSuchAlgorithmException e) {
             // not to be expected for SHA-512
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String formatKeyValue(String key, String value) {
+        try {
+            return key + ":" + URLEncoder.encode(value, "UTF-8")
+                    .replace("+", "%20")
+                    .replace("_", "%5F")
+                    .replace("~", "%7E")
+                    .replace("-", "%2D")
+                    .replace(".", "%2E");
+        } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
     }
