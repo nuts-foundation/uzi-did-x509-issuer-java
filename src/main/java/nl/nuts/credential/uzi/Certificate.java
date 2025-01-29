@@ -142,8 +142,14 @@ public class Certificate {
         }
         // parse the ASN1 encoded otherName to a string
         try (ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(asn1EncodedPolicy))) {
-            ASN1TaggedObject lvl1 = (ASN1TaggedObject) asn1InputStream.readObject();
-            ASN1Sequence sequence = (ASN1Sequence) lvl1.getBaseObject();
+            ASN1Sequence sequence;
+            ASN1Primitive object = asn1InputStream.readObject();
+            if (object instanceof ASN1TaggedObject) {
+                ASN1TaggedObject lvl1 = (ASN1TaggedObject) object;
+                sequence = (ASN1Sequence) lvl1.getBaseObject();
+            } else {
+                sequence = (ASN1Sequence) object;
+            }
             // the first object is the OID, the second is the value
             ASN1TaggedObject lvl2 = (ASN1TaggedObject) sequence.getObjectAt(1);
             return lvl2.getBaseObject().toString();
@@ -152,10 +158,16 @@ public class Certificate {
         }
     }
 
-    private boolean hasIdentifier(byte[] object, String s) {
-        try (ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(object))) {
-            ASN1TaggedObject lvl1 = (ASN1TaggedObject) asn1InputStream.readObject();
-            ASN1Sequence sequence = (ASN1Sequence) lvl1.getBaseObject();
+    private boolean hasIdentifier(byte[] raw, String s) {
+        try (ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(raw))) {
+            ASN1Sequence sequence;
+            ASN1Primitive object = asn1InputStream.readObject();
+            if (object instanceof ASN1TaggedObject) {
+                ASN1TaggedObject lvl1 = (ASN1TaggedObject) object;
+                sequence = (ASN1Sequence) lvl1.getBaseObject();
+            } else {
+                sequence = (ASN1Sequence) object;
+            }
             ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier) sequence.getObjectAt(0);
             return oid.getId().equals(s);
         } catch (IOException e) {

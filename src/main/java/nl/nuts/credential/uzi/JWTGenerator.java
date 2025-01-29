@@ -2,16 +2,9 @@ package nl.nuts.credential.uzi;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
-import io.jsonwebtoken.security.SignatureAlgorithm;
-import org.bouncycastle.util.io.pem.PemObject;
-import org.bouncycastle.util.io.pem.PemReader;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.security.*;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.*;
 
 public class JWTGenerator {
@@ -63,18 +56,21 @@ public class JWTGenerator {
     }
 
     /**
-     * Generate a Verifiable Credential (VC) using the provided certificates and private key
+     * Generate a Verifiable Credential (VC) using the provided certificates and keyStore.
+     * The first alias in the keyStore is used to retrieve the private key.
+     * The certificate in the keyStore is not used.
      * @param certificate List of X509 certificates, the first certificate is the CA and the last is the leaf certificate
      * @param keyStore The KeyStore containing the private key used for signing the JWT
+     * @param password The password for the KeyStore
      * @param subject The subject of the JWT
      */
-    public static String generateVC(Certificate certificate, KeyStore keyStore, String subject) throws CredentialCreationException {
+    public static String generateVC(Certificate certificate, KeyStore keyStore, String password, String subject) throws CredentialCreationException {
         try {
             // get first alias
             Enumeration<String> aliases = keyStore.aliases();
             String alias = aliases.nextElement();
             // Retrieve the private key from the KeyStore
-            Key privateKey = keyStore.getKey(alias, null);
+            Key privateKey = keyStore.getKey(alias, password.toCharArray());
             return generateVCInternal(certificate, privateKey, subject);
         } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
             throw new CredentialCreationException(e);
