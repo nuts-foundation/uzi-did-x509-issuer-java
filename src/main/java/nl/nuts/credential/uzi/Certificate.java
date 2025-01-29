@@ -134,6 +134,7 @@ public class Certificate {
             asn1EncodedPolicy = cert.getSubjectAlternativeNames().stream()
                     .filter(san -> san.get(0).equals(0)) // otherName
                     .map(san -> (byte[]) san.get(1))// get ASN1 encoded otherName
+                    .filter(object -> hasIdentifier(object, "2.5.5.5"))
                     .findFirst()
                     .orElseThrow(() -> new InvalidCertificateException("No UZI number found in certificate"));
         } catch (CertificateParsingException e) {
@@ -143,8 +144,20 @@ public class Certificate {
         try (ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(asn1EncodedPolicy))) {
             ASN1TaggedObject lvl1 = (ASN1TaggedObject) asn1InputStream.readObject();
             ASN1Sequence sequence = (ASN1Sequence) lvl1.getBaseObject();
+            // the first object is the OID, the second is the value
             ASN1TaggedObject lvl2 = (ASN1TaggedObject) sequence.getObjectAt(1);
             return lvl2.getBaseObject().toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean hasIdentifier(byte[] object, String s) {
+        try (ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(object))) {
+            ASN1TaggedObject lvl1 = (ASN1TaggedObject) asn1InputStream.readObject();
+            ASN1Sequence sequence = (ASN1Sequence) lvl1.getBaseObject();
+            ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier) sequence.getObjectAt(0);
+            return oid.getId().equals(s);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
