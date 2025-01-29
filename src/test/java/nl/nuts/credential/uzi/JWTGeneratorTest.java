@@ -1,24 +1,27 @@
 package nl.nuts.credential.uzi;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
-import org.bouncycastle.util.io.pem.PemWriter;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyStore;
+import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 public class JWTGeneratorTest {
+
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
 
     @Test
     public void testGenerateVCWithPem() {
@@ -44,7 +47,7 @@ public class JWTGeneratorTest {
             try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("example.com-chain.pem")) {
                 List<X509Certificate> certificates = X509CertificateParser.parse(inputStream);
                 Certificate certificate = new Certificate(certificates);
-                String jwt = JWTGenerator.generateVC(certificate, keyStore, null, "did:web:example.com:iam:groot");
+                String jwt = JWTGenerator.generateVC(certificate, keyStore, "test", "did:web:example.com:iam:groot");
                 System.out.println(jwt);
             }
         });
@@ -71,8 +74,8 @@ public class JWTGeneratorTest {
     static KeyStore loadPrivateKeyFromPkcs12() {
         String fileName = "example.com.p12";
         try (InputStream inputStream = JWTGenerator.class.getClassLoader().getResourceAsStream(fileName)) {
-            KeyStore keystore = KeyStore.getInstance("PKCS12");
-            keystore.load(inputStream, null);
+            KeyStore keystore = KeyStore.getInstance("PKCS12", "BC");
+            keystore.load(inputStream, "test".toCharArray());
             return keystore;
         } catch (Exception e) {
             e.printStackTrace();
