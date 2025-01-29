@@ -60,22 +60,4 @@ public class JWTGenerator {
             throw new CredentialCreationException(e);
         }
     }
-
-    static Key loadPrivateKey() {
-        // load from class path: example.com.key
-        // it's pem encoded
-        String fileName = "example.com.key";
-        try (InputStream inputStream = JWTGenerator.class.getClassLoader().getResourceAsStream(fileName)) {
-            try (PemReader pemReader = new PemReader(new InputStreamReader(inputStream))) {
-                PemObject pemObject = pemReader.readPemObject();
-                byte[] content = pemObject.getContent();
-                PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(content);
-                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-                return keyFactory.generatePrivate(keySpec);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 }

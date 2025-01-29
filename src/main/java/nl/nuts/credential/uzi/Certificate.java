@@ -14,6 +14,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Certificate {
     private List<X509Certificate> chain;
@@ -76,13 +77,30 @@ public class Certificate {
             MessageDigest digestSHA512 = MessageDigest.getInstance("SHA-256");
             byte[] hash = digestSHA512.digest(encoded);
             String policy = this.otherName();
-            return String.format("did:x509:0:sha256:%s::san:otherName:%s", Base64.getUrlEncoder().withoutPadding().encodeToString(hash), policy);
+            String withSan = String.format("did:x509:0:sha256:%s::san:otherName:%s", Base64.getUrlEncoder().withoutPadding().encodeToString(hash), policy);
+            Map<String, String> subject = this.subjectValues();
+            // join key/values with a colon, join pairs with a colon
+            String subjectString = subject.entrySet().stream().map(e -> e.getKey() + ":" + e.getValue()).collect(Collectors.joining(":"));
+            return withSan + "::" + "subject:" + subjectString;
         } catch (CertificateEncodingException e) {
             throw new InvalidCertificateException("CA is incorrect or malformed: " + e.getMessage());
         } catch (NoSuchAlgorithmException e) {
             // not to be expected for SHA-512
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Extract the subject from the certificate
+     */
+    private Map<String, String> subjectValues() {
+        X509Certificate cert = getCertificate();
+        X500Principal principal = cert.getSubjectX500Principal();
+        String dn = principal.getName(X500Principal.RFC2253);
+        Map<String, String> parsed = parseDN(dn);
+        // filter on the keys we want to keep
+        parsed.keySet().retainAll(Set.of("CN", "OU", "O", "C", "ST", "L"));
+        return parsed;
     }
 
     /**
@@ -130,23 +148,13 @@ public class Certificate {
      * @return a map of claims
      */
     Map<String, ?> toClaims() throws InvalidCertificateException{
-        X509Certificate leaf = this.getCertificate();
-        X500Principal principal = leaf.getSubjectX500Principal();
-        String dn = principal.getName(X500Principal.RFC2253);
-        Map<String, String> attributes = parseDN(dn);
+        Map<String, String> subject = this.subjectValues();
 
         return Map.of("vc", Map.of(
                 "@context", "https://www.w3.org/2018/credentials/v1",
                 "type", List.of("VerifiableCredential", "X509Credential"),
                 "credentialSubject", Map.of(
-                        "subject", Map.of(
-                            "CN", attributes.get("CN"),
-                            "O", attributes.get("O"),
-    //                        "OU", attributes.get("OU"),
-    //                        "C", attributes.get("C"),
-                            "L", attributes.get("L")
-    //                        "ST", attributes.get("ST"),
-                        ),
+                        "subject", subject,
                         "san", Map.of(
                             "otherName", this.otherName()
                         )

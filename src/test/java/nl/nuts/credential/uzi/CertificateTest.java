@@ -17,7 +17,7 @@ public class CertificateTest {
             try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("example.com-chain.pem")) {
                 List<X509Certificate> certificates = X509CertificateParser.parse(inputStream);
                 Certificate wrapper = new Certificate(certificates);
-                assertEquals("did:x509:0:sha512:CtgAZdCiHKlJcHoQNZJhwWCICze-D3duO65p95qb_H9qU0-5U3uxDIjlGZwKVXyzApGQYauCZ1RQWgjzagLacQ::san:otherName:2.16.528.1.1007.99.2110-1-1-S-2-00.000-3", wrapper.didX509());
+                assertEquals("did:x509:0:sha256:szqMaTpnD6GN0aRrT98eV4bhAoOgyItEZVyskYyL_Qc::san:otherName:2.16.528.1.1007.99.2110-1-1-S-2-00.000-3::subject:CN:example.com:L:world:O:ACME", wrapper.didX509());
             }
         });
     }
