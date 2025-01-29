@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.Key;
 import java.security.KeyFactory;
+import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.List;
@@ -17,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 public class JWTGeneratorTest {
 
     @Test
-    public void testGenerateVC() {
+    public void testGenerateVCWithPem() {
 
         Key privateKey = loadPrivateKey();
 
@@ -26,6 +27,21 @@ public class JWTGeneratorTest {
                 List<X509Certificate> certificates = X509CertificateParser.parse(inputStream);
                 Certificate certificate = new Certificate(certificates);
                 String jwt = JWTGenerator.generateVC(certificate, privateKey, "did:web:example.com:iam:groot");
+                System.out.println(jwt);
+            }
+        });
+    }
+
+    @Test
+    public void testGenerateVCWithPkcs12() {
+
+        KeyStore keyStore = loadPrivateKeyFromPkcs12();
+
+        assertDoesNotThrow(() -> {
+            try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("example.com-chain.pem")) {
+                List<X509Certificate> certificates = X509CertificateParser.parse(inputStream);
+                Certificate certificate = new Certificate(certificates);
+                String jwt = JWTGenerator.generateVC(certificate, keyStore, "did:web:example.com:iam:groot");
                 System.out.println(jwt);
             }
         });
@@ -43,6 +59,18 @@ public class JWTGeneratorTest {
                 KeyFactory keyFactory = KeyFactory.getInstance("RSA");
                 return keyFactory.generatePrivate(keySpec);
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    static KeyStore loadPrivateKeyFromPkcs12() {
+        String fileName = "example.com.p12";
+        try (InputStream inputStream = JWTGenerator.class.getClassLoader().getResourceAsStream(fileName)) {
+            KeyStore keystore = KeyStore.getInstance("PKCS12");
+            keystore.load(inputStream, null);
+            return keystore;
         } catch (Exception e) {
             e.printStackTrace();
         }
